@@ -9,7 +9,7 @@ python -m venv fastapi-env
 ```
 
 ```bash
-fastapi-env/bin/activate
+fastapi-env/Scripts/activate
 ```
 
 1. install all the requirements

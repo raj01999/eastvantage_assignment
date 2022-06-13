@@ -12,19 +12,22 @@ python -m venv fastapi-env
 fastapi-env/Scripts/activate
 ```
 
-1. install all the requirements
+1. Clone the repo
+2. cd to repo directory
+
+3. install all the requirements
 
    ```bash
    pip install -r requirements.txt
    ```
 
-2. run the server
+4. run the server
 
    ```bash
    uvicorn app.main:app --reload
    ```
 
-3. open the link in your browser
+5. open the link in your browser
    # http://localhost:8000/docs
 
 ### Name: Sarafraj Mallick

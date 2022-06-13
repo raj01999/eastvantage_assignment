@@ -1,9 +1,9 @@
 from fastapi import Depends, FastAPI, status, Response
-from sqlalchemy import between, false
 from . import schemas, models
 from .database import SessionLocal, engine
 from sqlalchemy.orm import Session
 from .getCoordinate import getCoordinate
+from geopy.distance import geodesic
 
 app = FastAPI()
 
@@ -15,8 +15,6 @@ def getDb():
         yield db
     finally:
         db.close()
-
-
 
 
 # creating an address from request body 
@@ -50,23 +48,17 @@ def create_address(req: schemas.Address, res:Response, db :Session = Depends(get
         db.commit()
         db.refresh(newAddress)
 
-        # after data added in database successfully 
         return {
             "status": "ok",
             "data": newAddress
         }
 
     except Exception as e:
-        # if some error came in server 
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
             "status" : "failed",
-            "msg" : e
+            "msg" : str(e)
         }
-
-
-
-
 
 
 # get all the address 
@@ -82,16 +74,11 @@ def get_all_address(res: Response, db :Session = Depends(getDb)):
         }
 
     except Exception as e:
-        # if some error came in server 
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
             "status" : "failed",
-            "msg" : e
+            "msg" : str(e)
         }
-
-
-
-
 
 
 # get those address that are nearest to the request body address {156.97 km}
@@ -103,25 +90,27 @@ def get_nearest_address(res: Response, addressLine, city, state, db :Session = D
         locationData = getCoordinate(addressLine, city, state)
         quaryCoordinate = locationData["latLng"]
 
-        someAddress1 = db.query(models.Address).filter((models.Address.latitude -  quaryCoordinate["lat"]).between(-1, 1)).all()
-        someAddress2 = db.query(models.Address).filter((models.Address.longitude -  quaryCoordinate["lng"]).between(-1, 1)).all()
+        firstCoordinate = (quaryCoordinate["lat"] , quaryCoordinate["lng"])
 
-        """
-        someAddress1 is holding those address whos latitude distace are with in 1 degree
-        someAddress2 is holding those address whos longitude distace are with in 1 degree
-        """
+        allAddress = db.query(models.Address).all()
 
         someAddress = []
 
-        for obj in someAddress1:
-            if obj in someAddress2:
-                someAddress.append(obj)
+        """
+        In here geodesic returning the distance between quary address and all database address,
+        If the distance is below 100km than only it's save the address to someAddress list. 
+
+        geodesic is importaed from geopy.distance module
+
+        Here, someAddress will hold all the address that between 100km
+        """
+
+        for address in allAddress:
+            secondCoordinate = (address.latitude, address.longitude)
+            distanceBetween = geodesic(firstCoordinate, secondCoordinate).km
+            if distanceBetween <= 100:
+                someAddress.append(address)
         
-        """
-        we know 1 degree distance = 111 km distance.
-        in here the someAddress is holding all the addresses betweeen this distance :=> 156.97 Km
-        sqrt(2) * 111 = 156.97 Km. 
-        """
 
         # sending the nearest address data to user
         return {
@@ -130,16 +119,11 @@ def get_nearest_address(res: Response, addressLine, city, state, db :Session = D
         }
 
     except Exception as e:
-        # if some error came in server 
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
             "status" : "failed",
-            "msg" : e
+            "msg" : str(e)
         }
-
-
-
-
 
 
 # update the address through id and request body 
@@ -167,6 +151,7 @@ def update_address(id, req: schemas.Address, res: Response, db: Session = Depend
             "mapUrl" : locationData["mapUrl"]
         }
 
+        # updating address through id and query params 
         updatedAddress = db.query(models.Address).filter(models.Address.id == id).update(newAddress)
 
         # if data not found in database 
@@ -186,17 +171,11 @@ def update_address(id, req: schemas.Address, res: Response, db: Session = Depend
         }
     
     except Exception as e:
-        print(e)
-        # if some error came is server 
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
             "status" : "failed",
-            "msg" : e
+            "msg" : str(e)
         }
-
-
-
-
 
 
 # delete the address through id 
@@ -224,10 +203,8 @@ def delete_address(id, res: Response, db: Session = Depends(getDb) ):
         }
 
     except Exception as e:
-        # if some error came in server 
         res.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {
             "status" : "failed",
-            "msg" : e
+            "msg" : str(e)
         }
-

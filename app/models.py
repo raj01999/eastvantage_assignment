@@ -1,6 +1,10 @@
 from sqlalchemy import Column, Integer, Float, String
 from .database import Base
 
+
+# creatiing table for database 
+# Initilizing all the coulmn in database with validation 
+
 class Address(Base):
     __tablename__ = "address"
 

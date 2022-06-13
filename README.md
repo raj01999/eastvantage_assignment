@@ -2,7 +2,7 @@ Before Begin follow the documentation and create an enviornament or you can inst
 
 https://docs.python.org/3/tutorial/venv.html
 
-Step of creating python env
+Step of creating python env in windows // you can see the documentation for other platform
 
 ```bash
 python -m venv fastapi-env
